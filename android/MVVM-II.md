@@ -1,0 +1,20 @@
+Lifecycle的原理很简单，当生命周期变化时，Activity通知到Lifecycle，其他类就可以通过Lifecycle感知生命周期的变化了。
+
+Lifecycle的核心就三个类：Lifecycle、LifecycleOwner和LifecycleObserver。这是一个观察者模式，Activity作为LifecycleOwner，把生命周期的变化反映到Lifecycle，Lifecycle再通知给所有的LifecycleObserver即可。
+
+注意一下ReportFragment这个类，Activity的生命周期就是通过它来通知Lifecycle的（添加一个看不见的Fragment，这个操作似乎似曾相识？）
+
+
+
+ViewModel，从Activity获取到了一个ViewModelStore，如果里面包含了LoginViewModel就直接取出来，否则新建一个并缓存到ViewModelStore里。那么ViewModelStore是什么，它是如何保持下来的？
+ViewModelStore里维护了一个Map，存储ViewModel实例.
+
+
+
+LiveData实际上是一个双层的观察者模式，它通过观察Lifecycle得知是否active，在此充当的是观察者。
+当它的值发生变化或者监听到Lifecycle变化时再通知到它的观察者，在此又充当被观察者。
+如此它就具备了我们想要的一切能力。
+
+LiveData的observe方法，了解它处理生命周期的流程：observe方法里创建了一个LifecycleBoundObserver来观察Activity的生命周期，LifecycleBoundObserver实现了LifecycleEventObserver，并在DESTROYED状态时移除了观察者，其后调用了一个activeStateChanged方法 ———— 通过判断是否active来分发数据，在dispatchingValue中会通知所有的观察者。
+
+https://z.itpub.net/article/detail/D08F4D7CBE4A6F362BAF19391C3E2BB6
